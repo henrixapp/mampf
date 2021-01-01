@@ -41,11 +41,14 @@ For more information see this [blog](https://mampfdev.wordpress.com).
 There you can also find a [screenshot gallery](https://mampfdev.wordpress.com/gallery/).
 ## System background
 
+[![MaMpf](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/simple/v45wg9&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/v45wg9/runs)
+[![codecov](https://codecov.io/gh/MaMpf-HD/mampf/branch/master/graph/badge.svg?token=x7Zq3m5lVH)](https://codecov.io/gh/MaMpf-HD/mampf)
+
 MaMpf is implemented in Ruby on Rails.
 
 * Ruby version: 2.7.2
 * Rails Version: 6.0.3.2
-* Test suite: rspec
+* Test suite: rspec, cypress
 * support for I18n
 
 ## Installation (with docker-compose)

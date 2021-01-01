@@ -62,6 +62,9 @@ class Lecture < ApplicationRecord
 
   validates :content_mode, inclusion: { in: ['video', 'manuscript'] }
 
+  validates :sort, inclusion: { in: ['lecture', 'seminar', 'oberseminar',
+                                     'proseminar', 'special'] }
+
   validates_presence_of :term, unless: :term_independent?
 
   validate :absence_of_term, if: :term_independent?
@@ -535,6 +538,8 @@ class Lecture < ApplicationRecord
     end
   end
 
+  # this is depracated in favor of <=>
+  # REPLACE all occurences and delete this method
   def self.sort_by_date(lectures)
     lectures.sort_by(&:begin_date).reverse
   end

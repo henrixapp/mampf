@@ -102,6 +102,7 @@ gem "select2-rails"
 gem "clipboard-rails"
 gem "rubyzip"
 gem "exception_handler", "~> 0.8.0.0"
+gem 'webpacker', '~> 5.x'
 
 group :development, :docker_development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
@@ -132,8 +133,13 @@ group :test do
   # Adds support for Capybara system testing and selenium driver
   gem "selenium-webdriver"
   # Easy installation and use of web drivers to run system tests with browsers
-  gem "webdrivers"
-  gem "faker"
-  gem "database_cleaner"
-  gem "launchy"
+  gem 'webdrivers'
+  gem 'faker'
+  gem 'database_cleaner'
+  gem 'launchy'
+  gem 'simplecov', require: false
+end
+
+group :test, :development, :docker_development do
+  gem 'cypress-on-rails', '~> 1.0'
 end

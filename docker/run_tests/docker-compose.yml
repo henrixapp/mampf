@@ -45,12 +45,13 @@ services:
       FROM_ADDRESS: development@localhost
       URL_HOST: localhost
       PROJECT_EMAIL: project@localhost
+      PROJECT_NOTIFICATION_EMAIL: project+notification@localhost
       ERROR_EMAIL: error@localhost
       INSTANCE_PATH: mampf
       REDIS_URL: redis://redis:6379/1
       SOLR_HOST: solr
       SOLR_PORT: 8983
-      SOLR_PATH: /solr/mampf-dev
+      SOLR_PATH: /solr/test
     volumes:
       - type: bind
         source: ../../app/
