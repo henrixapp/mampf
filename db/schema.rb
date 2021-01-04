@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_09_160756) do
+ActiveRecord::Schema.define(version: 2020_12_13_123754) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
@@ -22,6 +22,7 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
     t.text "details"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "on_main_page", default: false
     t.index ["announcer_id"], name: "index_announcements_on_announcer_id"
     t.index ["lecture_id"], name: "index_announcements_on_lecture_id"
   end
@@ -43,6 +44,7 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
     t.datetime "deadline"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.text "accepted_file_type", default: ".pdf"
     t.index ["lecture_id"], name: "index_assignments_on_lecture_id"
     t.index ["medium_id"], name: "index_assignments_on_medium_id"
   end
@@ -139,16 +141,6 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
     t.datetime "updated_at", null: false
     t.index ["course_id"], name: "index_course_tag_joins_on_course_id"
     t.index ["tag_id"], name: "index_course_tag_joins_on_tag_id"
-  end
-
-  create_table "course_user_joins", force: :cascade do |t|
-    t.bigint "course_id"
-    t.bigint "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.integer "primary_lecture_id"
-    t.index ["course_id"], name: "index_course_user_joins_on_course_id"
-    t.index ["user_id"], name: "index_course_user_joins_on_user_id"
   end
 
   create_table "courses", force: :cascade do |t|
@@ -353,6 +345,7 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
     t.text "geogebra_app_name"
     t.integer "position"
     t.boolean "text_input", default: false
+    t.float "boost", default: 0.0
     t.index ["quizzable_type", "quizzable_id"], name: "index_media_on_quizzable_type_and_quizzable_id"
     t.index ["teachable_type", "teachable_id"], name: "index_media_on_teachable_type_and_teachable_id"
   end
@@ -403,6 +396,16 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
     t.datetime "updated_at", precision: 6, null: false
     t.bigint "subject_id"
     t.index ["subject_id"], name: "index_programs_on_subject_id"
+  end
+
+  create_table "quiz_certificates", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "quiz_id", null: false
+    t.bigint "user_id"
+    t.text "code"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["quiz_id"], name: "index_quiz_certificates_on_quiz_id"
+    t.index ["user_id"], name: "index_quiz_certificates_on_user_id"
   end
 
   create_table "readers", force: :cascade do |t|
@@ -473,7 +476,6 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
   end
 
   create_table "submissions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.bigint "integer_id", default: -> { "nextval('submissions_id_seq'::regclass)" }, null: false
     t.bigint "tutorial_id", null: false
     t.bigint "assignment_id", null: false
     t.text "token"
@@ -734,14 +736,30 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
     t.index ["user_id", "postable_id"], name: "thredded_user_topic_read_states_user_postable", unique: true
   end
 
+  create_table "tutor_tutorial_joins", force: :cascade do |t|
+    t.bigint "tutorial_id", null: false
+    t.bigint "tutor_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["tutor_id"], name: "index_tutor_tutorial_joins_on_tutor_id"
+    t.index ["tutorial_id"], name: "index_tutor_tutorial_joins_on_tutorial_id"
+  end
+
   create_table "tutorials", force: :cascade do |t|
     t.text "title"
-    t.bigint "tutor_id"
     t.bigint "lecture_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["lecture_id"], name: "index_tutorials_on_lecture_id"
-    t.index ["tutor_id"], name: "index_tutorials_on_tutor_id"
+  end
+
+  create_table "user_favorite_lecture_joins", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "lecture_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["lecture_id"], name: "index_user_favorite_lecture_joins_on_lecture_id"
+    t.index ["user_id"], name: "index_user_favorite_lecture_joins_on_user_id"
   end
 
   create_table "user_submission_joins", force: :cascade do |t|
@@ -765,7 +783,6 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
     t.integer "subscription_type"
     t.boolean "consents"
     t.datetime "consented_at"
-    t.boolean "edited_profile"
     t.text "name"
     t.text "homepage"
     t.boolean "no_notifications", default: false
@@ -788,6 +805,8 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
     t.boolean "email_for_correction_upload"
     t.boolean "email_for_submission_decision"
     t.text "name_in_tutorials"
+    t.boolean "archived"
+    t.datetime "locked_at"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
@@ -823,8 +842,6 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
   add_foreign_key "commontator_comments", "commontator_threads", column: "thread_id", on_update: :cascade, on_delete: :cascade
   add_foreign_key "commontator_subscriptions", "commontator_threads", column: "thread_id", on_update: :cascade, on_delete: :cascade
   add_foreign_key "course_self_joins", "courses"
-  add_foreign_key "course_user_joins", "courses"
-  add_foreign_key "course_user_joins", "users"
   add_foreign_key "divisions", "programs"
   add_foreign_key "imports", "media"
   add_foreign_key "items", "media"
@@ -836,6 +853,8 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
   add_foreign_key "medium_tag_joins", "media"
   add_foreign_key "medium_tag_joins", "tags"
   add_foreign_key "programs", "subjects"
+  add_foreign_key "quiz_certificates", "media", column: "quiz_id"
+  add_foreign_key "quiz_certificates", "users"
   add_foreign_key "referrals", "items"
   add_foreign_key "referrals", "media"
   add_foreign_key "submissions", "assignments"
@@ -844,6 +863,10 @@ ActiveRecord::Schema.define(version: 2020_10_09_160756) do
   add_foreign_key "thredded_messageboard_users", "thredded_user_details", on_delete: :cascade
   add_foreign_key "thredded_user_post_notifications", "thredded_posts", column: "post_id", on_delete: :cascade
   add_foreign_key "thredded_user_post_notifications", "users", on_delete: :cascade
+  add_foreign_key "tutor_tutorial_joins", "tutorials"
+  add_foreign_key "tutor_tutorial_joins", "users", column: "tutor_id"
   add_foreign_key "tutorials", "lectures"
+  add_foreign_key "user_favorite_lecture_joins", "lectures"
+  add_foreign_key "user_favorite_lecture_joins", "users"
   add_foreign_key "user_submission_joins", "users"
 end

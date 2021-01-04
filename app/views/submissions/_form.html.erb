@@ -8,8 +8,9 @@
         <%= f.select :tutorial_id,
                      options_for_select(tutorials_selection(lecture),
                                         submission.tutorial&.id ||
-                                          assignment.previous
-                                                   &.tutorial(current_user)&.id),
+                                          submission
+                                            .preceding_tutorial(current_user)
+                                           &.id),
                      {},
                      { class: 'form-control' } %>
         <div class="invalid-feedback"
@@ -29,8 +30,8 @@
           <%= f.select :invitee_ids,
                        options_for_select(partner_selection(current_user,
                                                             lecture),
-                                          preceding_partner_ids(assignment,
-                                                                current_user)),
+                                          partner_preselection(current_user,
+                                                               lecture)),
                        {},
                        { multiple: true,
                          class: 'form-control' } %>
@@ -39,23 +40,23 @@
     <% end %>
     <div class="row">
       <div class="col-12">
-        <%= f.label :manuscript, 'Abgabe' %>
+        <%= f.label :manuscript, t('basics.submission') %>
       </div>
       <div class="col-3" id="userManuscript-uploadButton"
-           data-choosefiles="<%= t('basics.file') %>">
+           data-choosefiles="<%= file_button_text(assignment) %>">
         <%= f.hidden_field :manuscript,
                            value: submission.cached_manuscript_data,
                            id: 'upload-userManuscript-hidden' %>
         <%= f.file_field :manuscript,
                          class: 'form-control-file',
                          id: 'upload-userManuscript',
-                         multiple: true,
-                         accept: 'application/pdf' %>
+                         multiple: assignment.accepted_file_type == '.pdf',
+                         accept: assignment.accepted_for_file_input %>
         <%= f.hidden_field :detach_user_manuscript,
                            value: false %>
         <button id="userManuscript-uploadButton-btn"
          class="btn btn-sm btn-outline-secondary">
-          <%= t('basics.files') %>
+          <%= file_button_text(assignment) %>
          </button>
       </div>
 
@@ -148,12 +149,12 @@
             </div>
           </div>
         </div>
-        <div class="col-12 my-1">
+        <div class="col-12 my-1" id="file-permission-field">
           <input type="checkbox"
                  id="file-permission-checkbox"/>
           <%= t('submission.assure_third_party') %>
         </div>
-        <div class="col-12">
+        <div class="col-12" id="submission-final-upload-dialogue">
           <div class="col-12">
             <button id="userManuscript-uploadButton-call"
                     data-tr-success="<%= t('buttons.upload_success') %>"
@@ -167,6 +168,12 @@
           <div class="col-12">
             <small>
               <%= t('submission.removal_notice_html')%>
+            </small>
+          </div>
+          <div class="col-12">
+            <small class="text-danger submission-initially-hidden"
+                   id="userManuscript-not-upload-notice">
+              <%= t('submission.submission_not_upload_notice_html')%>
             </small>
           </div>
           <div class="col-12">

@@ -78,7 +78,7 @@ de:
       Deiner Profilseite Zugriff erhalten.
   footer:
     text_html: >
-      &copy; MaMpf Team 2019. MaMpf ist auf %{github}.
+      &copy; MaMpf Team 2020. MaMpf ist auf %{github}.
       Powered by %{rails}, %{bootstrap}, %{cytoscape},
       %{nerdamer}, %{katex}, %{thredded}, %{docker}, %{basecamp}.<br>
       Bugs meldest Du am besten %{bugs}.
@@ -116,8 +116,7 @@ de:
       Im Rahmen des Projekts heiSTART2.0 haben
       %{hendrik}, %{oli} und %{denis} zusammen mit der %{fs_mathphysinfo}
       Mittel zur Einrichtung eines MaMpf-unterstützten Mathematik-Helpdesks für
-      die Studieneingangsphase eingeworben. Der Helpdesk kommt im laufenden
-      Wintersemester 2019/20 bereits zum Einsatz.
+      die Studieneingangsphase eingeworben.
     physics_html: >
       Die %{physics_faculty} unterstützte MaMpf durch die Anschaffung
       medientechnischer Ausstatttung.
@@ -137,6 +136,10 @@ de:
     blog: 'Blog'
     logout: 'Logout'
     login: 'Login'
+    favorite_lectures: 'Schnellzugriff Veranstaltungen'
+    no_favorite_lectures_yet: >
+      Du hast dem Schnellzugriff noch keine Veranstaltung hinzugefügt.
+    quick_access: 'Schnellzugriff'
   info: 'Info'
   admin:
     navbar:
@@ -308,6 +311,16 @@ de:
         Hier kannst Du den Text eingeben. Du kannst LaTEX benutzen
         (indem du den Ausdruck in $...$ setzt). Eine Vorschau Deines Textes
         siehst Du unten.
+      on_main_page: >
+        auf Startseite anzeigen
+      main_page: auf Startseite
+      propagate: auf Startseite setzen
+      expel: von Startseite nehmen
+      info:
+        on_main_page: >
+          Wenn Du diesen Haken setzt, wir die Mitteilung auf der
+          MaMpf-Homepage angezeigt. Das bietet sich z.B. an, wenn die Mitteilung
+          eine Ankündigung für Wartungsarbeiten betrifft.
     lecture:
       lecture: 'Vorlesung'
       lecture_short: 'V'
@@ -675,8 +688,8 @@ de:
           Dies ist die Liste aller Veranstaltungen zu diesem Modul.
           Unveröffentlichte Veranstaltungen sind in rötlicher Farbe gekennzeichnet.
         subscribers_count: >
-          Das ist die Zahl aller NutzerInnen, die diese
-          Veranstaltung in ihrem Profil abonniert haben.
+          Das ist die Zahl aller NutzerInnen, die Veranstaltungen aus
+          diesem Modul abonniert haben.
         tags: >
           Das ist die Liste aller zu diesem Modul
           assoziierten Tags. Diese korrespondieren typischerweise
@@ -881,6 +894,7 @@ de:
         Mediums auf der MaMpf-Plattform keine Rechte Dritter verletzt werden.
       lock_comments: Kommentare für dieses Medium deaktivieren
       comments_locked: Kommentare deaktiviert
+      boost: Boost
       info:
         locked: >
           Dieses Medium wurde gesperrt. Du kannst es unter
@@ -1161,6 +1175,13 @@ de:
           die mit dem THymE-Editor bearbeitet wurden).
         details_warning: >
           Es wurden Details geändert, die noch nicht übernommen wurden.
+        boost: >
+          Über den Boost kannst Du die Reihenfolge überschreiben, in der
+          standardmäßig Medien angeordnet werden, die zu Modulen bzw.
+          Veranstaltungen gehören (der Boost wirkt sich nicht auf Medien aus,
+          die zu einer Sitzung assoziiert sind). Der Standardwert ist 0,
+          Medien mit höherem Boost werden weiter vorn angezeigt, Medien mit
+          niedrigerem Boost weiter hinten.
     tag:
       index: 'Tagübersicht'
       related_tags: 'Verknüpfte Tags'
@@ -1721,6 +1742,10 @@ de:
         typischerweise Quiz-Fragen, die nur im Kontext eines konkreten Quizzes
         Sinn ergeben (beispielsweise, weil in vorangegangenen Fragen spezielle
         Voraussetzungen festgelegt wurden).
+      course_disclaimer: >
+        Dieses Quiz ist semesterübergreifend auf der Ebene des Moduls
+        %{course} angesiedelt, das Material stammt also aus verschiedenen
+        Veranstaltungen und von verschiedenen DozentInnen.
       info:
         graph: >
           Der Quiz-Graph ist der gerichtete Graph, der zu dem
@@ -1799,13 +1824,13 @@ de:
     email_notifications: >
       Ich möchte per E-Mail über Folgendes benachrichtigt werden:
     email_for_announcement:
-      neue Mitteilungen in von mir abonnierten Veranstaltungen.
+      neue Mitteilungen in von mir abonnierten Veranstaltungen
     email_for_medium:
-      neue Medien in von mir abonnierten Veranstaltungen oder Modulen.
+      neue Medien in von mir abonnierten Veranstaltungen oder Modulen
     email_for_teachable:
-      neue angelegte Veranstaltungen oder Module.
+      neue angelegte Veranstaltungen oder Module
     email_for_news:
-      Neuigkeiten über MaMpf.
+      Neuigkeiten über MaMpf
     update: 'Profil updaten'
     success: 'Profil erfolgreich upgedatet.'
     please_update: >
@@ -1831,31 +1856,58 @@ de:
     no_current_at_all: >
       Im aktuellen Semester sind noch keine Veranstaltungen veröffentlicht
       worden.
-    new_design: >
-      Neues *experimentelles* Design verwenden (personalisierte Startseite, kein Dropdown-Menü
-      für Veranstaltungswahl)
     other_preferences: >
       Sonstige Einstellungen
     changes_made: >
       Es gibt ungespeicherte Änderungen. Bitte denke daran, diese zu speichern,
       damit die Änderungen wirksam werden.
     email_for_submissions: >
-      Bezüglich der Abgabe von Übungsblättern möchte ich per Email von MaMpf
+      Bezüglich der Abgabe von Übungsblättern möchte ich per E-Mail von MaMpf
       benachrichtigt werden, wenn:
     email_for_submission_upload: >
-      erfolgreich von einem Teammitglied eine Datei für eine Abgabe
-      hochgeladen wurde.
+      erfolgreiches Hochladen einer Datei durch ein Teammitglied
     email_for_submission_removal: >
-      von einem Teammitglied die Datei zu einer Abgabe entfernt wurde.
+      Löschen einer Datei durch ein anderes Teammitglied
     email_for_submission_join: >
-      jemand meinem Team für eine Abgabe beigetreten ist.
+      Beitritt eines Teammitglieds
     email_for_submission_leave: >
-      jemand aus meinem Team für eine Abgabe ausgetreten ist.
+      Austritt eines Teammitglieds
     email_for_correction_upload: >
-      von deiner TutorIn die Korrektur zu einer Abgabe hochladen wurde.
+      Verfügbarkeit der Korrektur
     email_for_submission_decision: >
-      eine Entscheidung über das Akzeptieren oder die Ablehnung einer
-      verspäteten Abgabe getroffen wurde
+      Annahme oder Ablehnung einer verspäteten Korrektur
+    delete_account: Account löschen
+    stored_submissions: >
+      Von Dir sind %{submissions} Abgaben zu Hausaufgaben im System gespeichert,
+      bei denen eine Datei hochgeladen wurde. Diese teilen sich auf in:
+    single_submissions: '%{single_submissions} Einzelabgaben'
+    team_submissions: '%{team_submissions} Teamabgaben'
+    submission_deletion: >
+      Die Einzelabgaben und zugehörigen Korrekturen werden alle gelöscht,
+      die Abgaben und zugehörigen Korrekturen, bei denen Du Mitglied
+      eines größeren Teams warst, dessen Mitglieder noch einen Account haben,
+      bleiben im System bis zum vorgesehenen Löschdatum.
+    confirm_account_deletion: >
+      Bitte bestätige die Löschung Deines Accounts, indem Du Dein Passwort
+      eingibst und den roten Button drückst.
+    thanks_for_contributions: >
+      Vielen Dank dafür, dass Du auf MaMpf als Editor tätig warst!
+      Von Dir gibt es auf MaMpf
+    given_lectures: '%{lectures} Vorlesung als DozentIn'
+    edited_media: '%{media} Medien als MedieneditorIn'
+    contributions_remain: >
+      Die Standardeinstellung sieht vor, dass diese in MaMpf belassen werden.
+      Hier kannst Du eingeben, unter welchem Namen diese künftig angezeigt
+      werden sollen:
+    manual_deletion: >
+      Wenn Du nicht möchtest, dass die Materialien in MaMpf verbleiben, kannst
+      Du die entsprechenden Vorlesungen und Medien manuell löschen.
+    email_notifications_header: E-Mail-Benachrichtigungen
+    lectures_and_courses: Veranstaltungen und Module
+    submissions: Abgabe von Übungsaufgaben
+    miscellaneous: Sonstiges
+    star_lecture: Veranstaltung dem Schnellzugriff hinzufügen
+    unstar_lecture: Veranstaltung aus dem Schnellzugriff entfernen
   mampf_news:
     title: 'MaMpf-News'
     check_notifications: 'Alle erledigen'
@@ -1893,6 +1945,12 @@ de:
   lecture:
     content: 'Veranstaltungsinhalt'
     unpublished: 'Diese Veranstaltung ist unveröffentlicht.'
+    no_tutorials_yet: >
+      Für diese Veranstaltung wurden noch keine Tutorien angelegt.
+    tutorials: >
+      Für diese Veranstaltung gibt es die folgenden Tutorien:
+    no_submissions_yet: >
+      Es waren bisher noch keine Hausaufgaben abzugeben.
   sure: 'Bist Du sicher?'
   details: 'Details'
   none: 'keine'
@@ -2088,6 +2146,21 @@ de:
     number_of_questions: 'Anzahl der Fragen: %{count}'
     quiz_level: 'Schwierigkeitsgrad: %{level}'
     number_of_questions_label: 'Anzahl der Fragen'
+    certificate_info: >
+      Du kannst ein Zertifikat dafür bekommen, dass Du dieses Quiz vollständig
+      absolviert hast. Wenn Du den Button drückst, erhältst Du das Zertifikat in
+      Form eines Codes aus 6 Zeichen.
+    certify: Zertifikat anfordern
+    obtained_certificate: >
+      Du hast für dieses Quiz folgenden Zertifikatscode bekommen: %{code}
+    certificate_info_on_use: >
+      Falls Deine Vorlesung zertifizierte MaMpf-Quizzes im Übungsbetrieb
+      verwendet, wirst Du den Code an geeigneter Stelle angeben müssen
+      (z.B. auf Deinem Übungsblatt), Deine TutorIn wird ihn später validieren.
+      Bei der Validierung kann die TutorIn Deinen Namen
+      einsehen (und zwar denjenigen, den Du unter "Name in Übungsgruppen"
+      angegeben hast), nicht jedoch Informationen darüber, inwieweit Du die
+      Fragen korrekt oder inkorrekt beantwortet hast.
     level:
       not_set: 'nicht gesetzt'
       easy: 'leicht'
@@ -2352,7 +2425,7 @@ de:
     future_ones: Zukünftige Abgaben
     no_old_ones: Es wurde noch nichts abgegeben.
     no_future_ones: >
-      Es sind keine Hausauafgaben jenseits der aktuellen vorhanden.
+      Es sind keine Hausaufgaben jenseits der aktuellen vorhanden.
     no_manuscript_yet: Es ist keine Datei hinterlegt.
     exists_no_longer: Diese Abgabe existiert nicht.
     correct_file_size: Die Datei hat die richtige Größe.
@@ -2378,10 +2451,12 @@ de:
     removal_notice_html: >
       <b>Hinweis:</b> Dateien werden nach Ablauf des Semesters gelöscht.
       Wir übernehmen keine Haftung für mögliche Datenverluste.
+    submission_not_upload_notice_html: >
+      <b>Wichtig</b>: Bitte drücke auf "Hochladen" und dann auf "Speichern", ansonsten werden deine
+       Änderungen verworfen, wenn du die Seite verlässt.
     submission_upload_notice_html: >
       <b>Wichtig</b>: Bitte drücke auf "Speichern", ansonsten werden deine
        Änderungen verworfen, wenn du die Seite verlässt.
-    code_copied_to_clipboard: Der Code wurde in die Zwischenablage kopiert.
     deletion_date: Löschdatum
     multiple_files_selected: Es wurden mehrere Dateien ausgewählt.
     merging_help_html: >
@@ -2396,7 +2471,14 @@ de:
     move_to_tutorial: verschieben in Tutorium
     manuscript_no_pdf: Die hochgeladene Datei ist keine gültige pdf-Datei.
     manuscript_size_too_big: >
-      Die hochgeladene Datei ist zu groß (sie darf höchstens 10 MB groß sein).
+      Die hochgeladene Datei ist zu groß (sie darf höchstens %{max_size} groß
+      sein).
+    wrong_file_type: >
+      Die Datei hat den falschen Dateityp %{file_type}. Erwartet wird eine Datei
+      vom Typ %{accepted_file_type}.
+    wrong_mime_type: >
+      Die Datei hat den falschen MIME Type %{mime_type}. Erwartet wird eine
+      Datei vom MIME Type %{accepted_mime_types}.
     correction_size_too_big: >
       Die hochgeladene Datei ist zu groß (sie darf höchstens 15 MB groß sein).
     too_late_no_saving: >
@@ -2434,9 +2516,6 @@ de:
       <li>
       Beitritt eines Teammitglieds
       </li>
-      <li>
-      Austritt eines Teammitglieds
-      </li>
       </ul>
     last_modification: >
       letzte Änderung
@@ -2453,9 +2532,6 @@ de:
       </li>
       <li>
       Beitritt eines Teammitglieds
-      </li>
-      <li>
-      Austritt eines Teammitglieds
       </li>
       </ul>
       Liegt die letzte Änderung vor dem Abgabetermin, ist die Abgabe gültig.
@@ -2486,6 +2562,34 @@ de:
     rejected: abgelehnt
     bulk_download: Paketdownload der Abgaben
     bulk_upload: Paketupload der Korrekturen
+    code_explanation: >
+      Durch Kenntnis und Eingabe dieses Code können andere Personen dieser
+      Abgabe beitreten. Das Beitreten über einen Code bietet sich insbesondere
+      dann an, wenn die entsprechende Person in dieser Veranstaltung noch keine
+      Abgabe zusammen mit Dir hatte. Personen, mit denen Du schon
+      zusammengearbeitet hast, kannst Du über den "Einladen"-Button eine
+      Einladung zu dieser Abgabe zukommen lassen (diesen Button gibt es nur in
+      dem Fall, dass entsprechende Personen existieren, nicht schon Teammitglied
+      sind und die Teamgröße unterhalb der Schranke für die Teamgröße liegt).
+    profile_info_html: >
+      In Deinen %{profile} kannst Du diverse Einstellungen vornehmen, über
+      welche Ereignisse im Hinblick auf Abgaben Du per Email informiert werden
+      möchtest. Das beinhaltet erfolgreichen Upload oder Entfernen von Dateien,
+      Beitritt oder Austritt von Teammitgliedern, Entscheidung über verspätete
+      Abgaben und den Upload von Korrekturen durch Deine TutorIn.
+    deletion_date_info: >
+      Bei der Abgabe handelt es sich um persönliche Daten, die wir aus Gründen
+      des Datenschutzes zwei Wochen nach Ablauf des Semesters löschen.
+      Du wirst darüber vorher per Mail informiert werden, so dass Du die Daten
+      sichern kannst.
+    team_info: >
+      Hier sieht Du Dein Abgabeteam. Du kannst Dein Team vergrößern, indem Du
+      anderen Personen den Abgabecode weitergibst, so dass diese beitreten
+      können, oder indem Du Personen, mit denen Du in dieser Veranstaltung schon
+      gemeinsame Abgaben hattest, einlädst, so dass diese beitreten können.
+      Das Team kann aber nur so groß werden wie die maximale Teamgröße, die
+      in der Veranstaltung gilt.
+    file_format: Abgabeformat
   assignment:
     expired: Die Abgabefrist ist abgelaufen.
     not_in_this_lecture: >
@@ -2514,44 +2618,59 @@ de:
       Dateiuploads beinhalten, dafür hochgeladen wurden.
     late_submission_decision: >
       Du kannst entscheiden, ob Du sie akzeptierst oder ablehnst.
+    own_tutorials: >
+      Eigene Tutorien
+    grace_period_warning: >
+      Bis %{friendly_deadline} läuft noch die Kulanzfrist, innerhalb derer
+      Abgaben und nachträgliche Änderungen durch die Studierenden noch möglich
+      sind (was jedoch zur Einstufung der entsprechenden Abgaben als
+      verspätet führt).
+    certificate_check: Quiz-Zertifikat validieren
+    certificate_check_info: >
+      Hier kannst Du Zertifikats-Codes überprüfen, die NutzerInnen nach dem
+      vollständigen Absolvieren eines Quizzes erhalten haben. Bei Eingabe eines
+      gültigen Codes erhältst Du Informationen darüber, zu welcher NutzerIn und
+      welchem Quiz das Zertifikat gehört.
+    certificate_valid: >
+      Der Code ist gültig. Er gehört zu NutzerIn %{user} und zum Quiz %{quiz}.
+    certificate_invalid: Der Code ist ungültig.
+    teams_as_csv: Teams als .csv
     bulk_upload:
       report: Bericht zum Paketupload der Korrekturen
       number_of_submissions: Anzahl der Abgaben
-      successfully_extracted: Anzahl der erfolgreich extrahierten Korrrekturen
-      errors: Fehlermeldungen
+      successfully_saved: Anzahl der erfolgreich gespeicherten Korrrekturen
       invalid_filenames: ungültige Dateinamen
-      in_subfolder: nicht im Basisverzeichnis
       invalid_files: ungültige Dateien
       invalid_submission_id: ungültige Abgabe-ID
       no_decision: noch keine Entscheidung über Akzeptanz getroffen
       rejected: Korrektur bereits abgelehnt
+      files_in_cache: Datei(en) erfolgreich in den Zwischenspeicher hochgeladen.
       info:
+        general_info: >
+          Hier kannst Du mehrere Korrekturen gleichzeitig hochladen.
+          Damit diese von MaMpf zugeordnet werden können, sollten die Dateinamen
+          idealerweise mit den Dateinamen der Abgaben übereinstimmen.
         invalid_filenames: >
-          Hier sind die Namen derjenigen Dateien aus dem Zip-Archiv aufgelistet,
+          Hier sind die Namen derjenigen hochgeladenen Dateien aufgelistet,
           die nicht in das von MaMpf vorgegebene Namensschema passen.
-        in_subfolder: >
-          Hier sind die Namen derjenigen Dateien aus dem Zip-Archiv aufgelistet,
-          die in Unterverzeichnissen liegen. Diese werden von MaMpf ignoriert.
         invalid_files: >
-          Hier sind die Namen derjenigen Dateien aus dem Zip-Archiv aufgelistet,
-          die zwar einer Abgabe zugeordnet werden konnten, deren Hochladen aber
+          Hier sind die Namen derjenigen hochgeladenen Dateien aufgelistet,
+          die zwar einer Abgabe zugeordnet werden konnten, deren Speichern aber
           daran scheitert, dass sie nicht den Anforderungen genügen, die MaMpf
           an Korrekturdateien stellt (z.B. falscher Dateityp, Überschreiten der
           Größenbeschränkung etc.)
-        errors: >
-          Das sind die Fehlermeldungen, die beim Entpacken aufgetreten sind.
         invalid_submission_id: >
-          Hier sind die Namen derjenigen Dateien aus dem Zip-Archiv aufgelistet,
+          Hier sind die Namen derjenigen hochgeladenen Dateien aufgelistet,
           die zwar in das von MaMpf vorgegebene Namensschema passen, deren dort
-          entahltene Abgaben-ID aber zu keiner Abgabe passt.
+          enthaltene Abgaben-ID aber zu keiner Abgabe passt.
         no_decision: >
-          Hier sind diejenigen Abgabeteams aufgelistet, für die Du eine
-          Korrektur hochgeladen hast, aber noch keine Entscheidung darüber
-          getroffen hast, ob die verspätete Abgabe akzeptiert wird. Die
+          Hier sind diejenigen Abgabeteams aufgelistet, für die eine
+          Korrektur hochgeladen wurde, aber noch keine Entscheidung darüber
+          getroffen wurde, ob die verspätete Abgabe akzeptiert wird. Die
           entsprechenden Korrekturen wurden deshalb nicht hochgeladen.
         rejected: >
-          Hier sind diejenigen Abgabeteams aufgelistet, für die Du eine
-          Korrektur hochgeladen hast, aber bereits entschieden hast,
+          Hier sind diejenigen Abgabeteams aufgelistet, für die eine
+          Korrektur hochgeladen wurde, aber bereits entschieden wurde,
           dass die verspätete Abgabe nicht akzeptiert wird. Die
           entsprechenden Korrekturen wurden deshalb nicht hochgeladen.
   package:
@@ -2572,6 +2691,10 @@ de:
       Wenn Du in Zukunft keine E-Mails mehr über Aktivitäten in MaMpf erhalten
       möchtest, kannst Du dieses Feature in Deinen Profileinstellungen
       deaktivieren.
+    non_working_links: >
+      Falls ein Link aus dieser Mail nicht funktioniert, wenn Du ihn aus Deinem
+      Mailclient heraus aufrufst, kannst Du versuchen, ihn per Copy and Paste
+      die Adresszeile Deines Browsers zu kopieren und dann aufzurufen.
     announcement_subject: 'Neue Mitteilung'
     mampf_news: 'über MaMpf'
     new_announcement: 'Es gibt eine neue Mitteilung'
@@ -2807,6 +2930,7 @@ de:
     programs: 'Studiengänge'
     visibility: 'Zusatzmaterialien'
     tutor: 'TutorIn'
+    tutors: 'TutorInnen'
     tutorials: 'Tutorien'
     assignments: 'Hausaufgaben'
     deadline: 'Abgabetermin'
@@ -2826,6 +2950,10 @@ de:
     corrections: 'Korrekturen'
     overview: Übersicht
     tba: N.N.
+    due: bis
+    as: als
+    as_file_type: als %{type}-Datei
+    code_copied_to_clipboard: Der Code wurde in die Zwischenablage kopiert.
   access:
     unpublished: 'unveröffentlicht'
     all: 'frei'
@@ -2924,6 +3052,7 @@ de:
     accept: 'Akzeptieren'
     reject: 'Ablehnen'
     dismiss: 'Ausblenden'
+    validate: 'Validieren'
   warnings:
     save_before: >
       Du musst zunächst die anderen Änderungen speichern oder verwerfen.
@@ -2964,13 +3093,6 @@ de:
       Bist Du sicher? Damit wird sich für alle NutzerInnen die Startseite
       ändern, da die aktuellen Vorlesungen über das aktuelle Semester bestimmt
       werden.
-    delete_account_with_submissions: >
-      Bist Du sicher? ACHTUNG: Es sind %{submissions} Abgaben zu Hausaufgaben
-      von Dir im System, davon %{single_submissions} als Einzelabgabe.
-      Die Einzelabgaben und zugehörigen Korrekturen werden alle gelöscht,
-      die Abgaben und zugehörigen Korrekturen, bei denen Du Mitglied
-      eines größeren Teams warst, dessen Mitglieder noch einen Account haben,
-      bleiben im System bis zum vorgesehenen Löschdatum.
   privacy_html: >
     Wir nehmen den Umgang mit Deinen Daten ernst. Im Rahmen der
     Datenschutz-Grundverordnung (DSGVO) benötigen wir Deine Zustimmung zur
@@ -2995,7 +3117,7 @@ de:
     no_lecture: 'Eine Veranstaltung mit der angeforderten id existiert nicht.'
     no_lesson: 'Eine Sitzung mit der angeforderten id existiert nicht.'
     no_page: >
-      Die angeforderte Seit existiert nicht. Du wurdest auf die
+      Die angeforderte Seite existiert nicht. Du wurdest auf die
       MaMpf-Homepage umgeleitet.
     no_video: 'Zu diesem Medium existiert kein Video.'
     no_manuscript: 'Zu diesem Medium existiert kein Manuskript.'
@@ -3040,6 +3162,13 @@ de:
       In dieser Veranstaltung bist Du keine TutorIn.
     no_editor_or_teacher: >
       In dieser Veranstaltung bist Du weder DozentIn noch EditorIn.
+    no_student_status_in_lecture: >
+      In dieser Veranstaltung bist Du nicht abgabeberechtigt.
+    no_tutorials_in_lecture: >
+      In dieser Veranstaltung gibt es keine Tutorien, deswegen kann auch nichts
+      abgegeben werden.
+    no_assignments_in_lecture: >
+      In dieser Veranstaltung gibt es bisher keine Hausaufgaben.
     tutorials:
       destruction_failed: >
         Das Tutorium konnte nicht gelöscht werden. Das kann z.B. daran liegen,
@@ -3051,6 +3180,19 @@ de:
         Die Hausaufgabe konnte nicht gelöscht werden. Das kann z.B. daran
         liegen, dass es dafür bereits Abgaben gibt, für die Dateien hochgeladen
         wurden.
+    certificate_already_claimed: >
+      Das Zertifikat wurde bereits auf eine andere NutzerIn ausgestellt.
+    no_announcement: >
+      Eine Mitteilung mit dieser id existiert nicht.
+  exception:
+    title: Fehler
+    exception: Exception auf %{host}
+    exception_report: 'Es gab eine Exception auf %{host}:'
+    user_text: >
+      Ups, das hätte nicht passieren sollen. Das ist ein Bug in MaMpf.
+    will_be_repaired: >
+      Das MaMpf-Team hat eine Benachrichtigung über diesen Bug erhalten, wir
+      werden versuchen, ihn so schnell wie möglich zu beheben.
   activerecord:
     errors:
       no_valid_url: 'Das ist keine gültige URL.'
@@ -3079,6 +3221,12 @@ de:
             title:
               blank: 'Es muss ein Titel angegeben werden.'
               taken: 'Dieser Titel ist bereits vergeben.'
+        clicker_vote:
+          attributes:
+            clicker:
+              clicker_closed: 'Der zugehörige Clicker ist geschlossen.'
+            value:
+              out_of_range: 'Der Wert ist außerhalb des zulässigen Bereichs.'
         course:
           attributes:
             title:
@@ -3191,6 +3339,10 @@ de:
           attributes:
             tutorial:
               blank: Es muss ein gültiges Tutorium angegeben werden.
+            user_submission_joins:
+              invalid: >
+                Es gibt schon eine Abgabe von Dir oder die Teamgröße ist
+                überschritten.
         tag:
           attributes:
             notions:

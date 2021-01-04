@@ -2,14 +2,17 @@
 class User < ApplicationRecord
   # use devise for authentification, include the following modules
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable, :confirmable
+         :recoverable, :rememberable, :validatable, :confirmable, :lockable
 
   # a user has many subscribed lectures
   has_many :lecture_user_joins, dependent: :destroy
   has_many :lectures, -> { distinct }, through: :lecture_user_joins
 
-  # a user has many subscribed courses
-  has_many :course_user_joins, dependent: :destroy
+  # a user has many favorite lectures
+  has_many :user_favorite_lecture_joins, dependent: :destroy
+  has_many :favorite_lectures, -> { distinct },
+           through: :user_favorite_lecture_joins,
+           source: :lecture
 
   # a user has many courses as an editor
   has_many :editable_user_joins, foreign_key: :user_id, dependent: :destroy
@@ -28,13 +31,16 @@ class User < ApplicationRecord
   has_many :given_lectures, class_name: 'Lecture', foreign_key: 'teacher_id'
 
   # a user has many tutorials as a tutor
-  has_many :given_tutorials, class_name: 'Tutorial', foreign_key: 'tutor_id'
+
+  has_many :tutor_tutorial_joins, foreign_key: 'tutor_id', dependent: :destroy
+  has_many :given_tutorials, -> { order(:title) },
+           through: :tutor_tutorial_joins, source: :tutorial
 
   # a user has many notifications as recipient
   has_many :notifications, foreign_key: 'recipient_id'
 
   # a user has many announcements as announcer
-  has_many :announcements, foreign_key: 'announcer_id'
+  has_many :announcements, foreign_key: 'announcer_id', dependent: :destroy
 
   # a user has many clickers as editor
   has_many :clickers, foreign_key: 'editor_id', dependent: :destroy
@@ -43,13 +49,17 @@ class User < ApplicationRecord
   has_many :user_submission_joins, dependent: :destroy
   has_many :submissions, through: :user_submission_joins
 
+  # a user has many quiz certificates that are obtained by solving quizzes
+  # and claiming the certificate
+  has_many :quiz_certificates, dependent: :destroy
+
   # if a homepage is given it should at leat be a valid address
   validates :homepage, http_url: true, if: :homepage?
 
+  validates :locale, inclusion: { in: I18n.available_locales.map(&:to_s) }, if: :locale?
+
   # a user needs to give a display name
-  validates :name,
-            presence: true,
-            if: :edited_profile?
+  validates :name, presence: true, if: :persisted?
 
   # set some default values before saving if they are not set
   before_save :set_defaults
@@ -283,7 +293,8 @@ class User < ApplicationRecord
   # - all courses if the user is an admin
   # - all edited courses otherwise
   def editable_courses
-    return Course.includes(lectures: [:term, :teacher]).all if admin
+    return Course.all if admin
+
     edited_courses
   end
 
@@ -304,7 +315,8 @@ class User < ApplicationRecord
   # editable courses with inheritance are all editable courses (see above)
   # together with all courses that are parent to edite lectures
   def editable_courses_with_inheritance
-    (editable_courses + edited_lectures.map(&:course)).uniq
+    (editable_courses.includes(lectures: [:term, :teacher]) +
+       edited_lectures.map(&:course)).uniq
   end
 
   # lectures as module editor are all lectures that belong to an edited course
@@ -458,6 +470,7 @@ class User < ApplicationRecord
     return false unless lecture.is_a?(Lecture)
     return false unless lecture.in?(lectures)
     lectures.delete(lecture)
+    favorite_lectures.delete(lecture)
     true
   end
 
@@ -487,6 +500,18 @@ class User < ApplicationRecord
     User.where(id: partner_ids - [id])
   end
 
+  def recent_submission_partners(lecture)
+    recent_submissions = Submission.where(assignment:
+                                            lecture.current_assignments +
+                                              lecture.previous_assignments)
+    own_submissions = UserSubmissionJoin.where(user: self,
+                                               submission: recent_submissions)
+                                        .pluck(:submission_id)
+    partner_ids = UserSubmissionJoin.where(submission: own_submissions)
+                                    .pluck(:user_id)
+    User.where(id: partner_ids - [id])
+  end
+
   def tutor?
     given_tutorials.any?
   end
@@ -495,20 +520,51 @@ class User < ApplicationRecord
     in?(lecture.editors) || self == lecture.teacher
   end
 
+  def proper_submissions_count
+    submissions.proper.size
+  end
+
+  def proper_single_submissions_count
+    submissions.proper.select { |s| s.users.size == 1 }.size
+  end
+
+  def proper_team_submissions_count
+    proper_submissions_count - proper_single_submissions_count
+  end
+
+  def media_editor?
+    edited_media.any?
+  end
+
+  def contributor?
+    teacher? || media_editor?
+  end
+
+  def archive_and_destroy(archive_name)
+    if contributor?
+      success = transfer_contributions_to(archive_user(archive_name))
+      return false unless success
+    end
+    destroy
+  end
+
+  def proper_student_in?(lecture)
+    lecture.in?(lectures) && !in?(lecture.tutors) && !in?(lecture.editors) &&
+      self != lecture.teacher
+  end
+
   private
 
   def set_defaults
-    self.subscription_type = 1 if subscription_type.nil?
-    self.admin = false if admin.nil?
+    self.subscription_type ||= 1
+    self.admin ||= false
+    self.name ||= email.split('@').first
+    self.locale ||= I18n.default_locale.to_s
   end
 
   # sets time for DSGVO consent to current time
   def set_consented_at
     update(consented_at: Time.now)
-  end
-
-  def courses_exist?
-    return true if Course.all.any? && edited_profile?
   end
 
   # returns array of ids of all courses that preced the subscribed courses
@@ -525,5 +581,27 @@ class User < ApplicationRecord
   def destroy_single_submissions
     Submission.where(id: submissions.select { |s| s.users.count == 1 }
                                     .map(&:id)).destroy_all
+  end
+
+  def archive_email
+    splitting = DefaultSetting::PROJECT_EMAIL.split('@')
+    "#{splitting.first}-archive-#{id}@#{splitting.second}"
+  end
+
+  def transfer_contributions_to(user)
+    return false unless user && user.valid? && user != self
+    given_lectures.update_all(teacher_id: user.id)
+    EditableUserJoin.where(user: self, editable_type: 'Medium')
+                    .update_all(user_id: user.id)
+  end
+
+  def archive_user(archive_name)
+    User.create(name: archive_name,
+                email: archive_email,
+                password: SecureRandom.base58(12),
+                consents: true,
+                consented_at: Time.now,
+                confirmed_at: Time.now,
+                archived: true)
   end
 end

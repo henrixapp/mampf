@@ -31,6 +31,11 @@ class Lecture < ApplicationRecord
   has_many :lecture_user_joins, dependent: :destroy
   has_many :users, -> { distinct }, through: :lecture_user_joins
 
+  # a lecture has many users who have starred it (fans)
+  has_many :user_favorite_lecture_joins, dependent: :destroy
+  has_many :fans, -> { distinct }, through: :user_favorite_lecture_joins,
+           source: :user
+
   # a lecture has many editors
   # these are users different from the teacher who have the right to
   # modify lecture contents
@@ -42,7 +47,7 @@ class Lecture < ApplicationRecord
   has_many :announcements, dependent: :destroy
 
   # a lecture has many tutorials
-  has_many :tutorials
+  has_many :tutorials, -> { order(:title) }
 
   # a lecture has many assignments (e.g. exercises with deadlines)
   has_many :assignments
@@ -56,6 +61,9 @@ class Lecture < ApplicationRecord
   validates :course, uniqueness: { scope: [:teacher_id, :term_id, :sort] }
 
   validates :content_mode, inclusion: { in: ['video', 'manuscript'] }
+
+  validates :sort, inclusion: { in: ['lecture', 'seminar', 'oberseminar',
+                                     'proseminar', 'special'] }
 
   validates_presence_of :term, unless: :term_independent?
 
@@ -89,10 +97,12 @@ class Lecture < ApplicationRecord
   # as well
   before_destroy :destroy_forum
 
-  # scopes for published lectures
+  # scopes
   scope :published, -> { where.not(released: nil) }
 
   scope :no_term, -> { where(term: nil) }
+
+  scope :restricted, -> { where.not(passphrase: ['', nil]) }
 
   searchable do
     integer :term_id do
@@ -502,16 +512,26 @@ class Lecture < ApplicationRecord
   end
 
   # for a given list of media, sorts them as follows:
-  # 1) media associated to the lecture
+  # 1) media associated to the lecture, sorted first by boost and second
+  # by creation date
   # 2) media associated to lessons of the lecture, sorted by lesson numbers
   def lecture_lesson_results(filtered_media)
     lecture_results = filtered_media.where(teachable: self)
+                                    .order(boost: :desc, created_at: :desc)
     lesson_results = filtered_media.where(teachable:
                                             Lesson.where(lecture: self))
     lecture_results + lesson_results.includes(:teachable)
-                                    .sort_by { |m| [m.lesson.date,
-                                                    m.lesson.id,
-                                                    m.position] }
+                                    .sort_by do |m|
+                                      [order_factor*m.lesson.date.jd,
+                                       order_factor*m.lesson.id,
+                                       m.position]
+                                    end
+  end
+
+  def order_factor
+    return -1 unless lecture.term.present?
+    return -1 if lecture.term.active
+    1
   end
 
   def begin_date
@@ -520,6 +540,8 @@ class Lecture < ApplicationRecord
     end
   end
 
+  # this is depracated in favor of <=>
+  # REPLACE all occurences and delete this method
   def self.sort_by_date(lectures)
     lectures.sort_by(&:begin_date).reverse
   end
@@ -612,20 +634,20 @@ class Lecture < ApplicationRecord
   end
 
   def self.search_by(search_params, page)
-    search_params[:types] = [] if search_params[:all_types] == '1'
-    search_params[:term_ids] = [] if search_params[:all_terms] == '1'
-    search_params[:teacher_ids] = [] if search_params[:all_teachers] == '1'
-    search_params[:program_ids] = [] if search_params[:all_programs] == '1'
+    search_params[:types] = [] if search_params[:all_types] == '1' || search_params[:types].nil?
+    search_params[:term_ids] = [] if search_params[:all_terms] == '1' || search_params[:term_ids].nil?
+    search_params[:teacher_ids] = [] if search_params[:all_teachers] == '1' || search_params[:teacher_ids].nil?
+    search_params[:program_ids] = [] if search_params[:all_programs] == '1' || search_params[:program_ids].nil?
     search = Sunspot.new_search(Lecture)
     # add lectures without term to current term
-    if Term.active.id.to_s.in?(search_params[:term_ids])
+    if Term.active.try(:id).to_i.to_s.in?(search_params[:term_ids])
       search_params[:term_ids].push('0')
     end
     search.build do
-      with(:sort, search_params[:types])
-      with(:teacher_id, search_params[:teacher_ids])
-      with(:program_ids, search_params[:program_ids])
-      with(:term_id, search_params[:term_ids])
+      with(:sort, search_params[:types]) unless search_params[:types].empty?
+      with(:teacher_id, search_params[:teacher_ids]) unless search_params[:teacher_ids].empty?
+      with(:program_ids, search_params[:program_ids]) unless search_params[:program_ids].empty?
+      with(:term_id, search_params[:term_ids]) unless search_params[:term_ids].empty?
     end
     admin = User.find_by_id(search_params[:user_id])&.admin
     unless admin
@@ -661,13 +683,28 @@ class Lecture < ApplicationRecord
   end
 
   def tutors
-    User.where(id: tutorials.pluck(:tutor_id))
+    User.where(id: TutorTutorialJoin.where(tutorial: tutorials)
+                                    .pluck(:tutor_id).uniq)
   end
 
   def submission_deletion_date
     Rails.cache.fetch("#{cache_key_with_version}/submission_deletion_date") do
-      term.end_date + 15.days
+      (term&.end_date || Term.active&.end_date || (Date.today + 180.days)) +
+        15.days
     end
+  end
+
+  def assignments_by_deadline
+    assignments.group_by(&:deadline).sort
+  end
+
+  def current_assignments
+    assignments_by_deadline.select { |x| x.first >= Time.now }.first&.second
+                           .to_a
+  end
+
+  def previous_assignments
+    assignments_by_deadline.select { |x| x.first < Time.now }.last&.second.to_a
   end
 
   private
@@ -750,6 +787,7 @@ class Lecture < ApplicationRecord
   end
 
   def term_independent?
+    return false unless course
     course.term_independent
   end
 

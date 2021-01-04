@@ -18,7 +18,13 @@ class Ability
       end
     elsif user.editor? || user.teacher?
       # :read is a cancancan alias for index and show actions
-      can [:read, :inspect], :all
+      can [:read], :all
+
+      can :inspect, [Course, Lecture, Lesson, Tag]
+      can :inspect, Medium do |medium|
+        medium.visible_for_user?(user)
+      end
+
       cannot :index, Announcement
       can :manage, [:administration, :erdbeere, Item, Referral]
       cannot :classification, :administration
@@ -32,9 +38,9 @@ class Ability
         answer.question.edited_with_inheritance_by?(user)
       end
 
-      can [:new, :cancel_edit, :cancel_new], Assignment
+      can [:new, :cancel_edit, :cancel_new, :create], Assignment
 
-      can [:edit, :create, :update, :destroy], Assignment do |assignment|
+      can [:edit, :update, :destroy], Assignment do |assignment|
         assignment.lecture.edited_by?(user)
       end
 
@@ -75,8 +81,11 @@ class Ability
 
       can :start, :main
 
-      can [:catalog, :search, :play, :display, :geogebra,
-           :register_download, :show_comments], Medium
+      can [:catalog, :search, :register_download, :show_comments], Medium
+      cannot :show, Medium
+      can [:play, :display, :geogebra, :show], Medium do |medium|
+        medium.visible_for_user?(user)
+      end
       can [:update, :enrich, :add_item, :add_reference, :add_screenshot,
            :remove_screenshot, :export_toc, :import_script_items,
            :export_references,
@@ -117,11 +126,11 @@ class Ability
            :cancel_action, :accept, :reject, :edit_correction,
            :cancel_edit_correction],
           Submission do |submission|
-        user == submission.tutorial.tutor
+        user.in?(submission.tutorial.tutors)
       end
 
       can [:show_manuscript, :show_correction], Submission do |submission|
-          user.in?(submission.users) || user == submission.tutorial.tutor
+          user.in?(submission.users) || user.in?(submission.tutorial.tutors)
       end
 
       can :manage, Tag
@@ -132,7 +141,7 @@ class Ability
 
       can [:new, :create, :cancel_edit, :cancel_new, :overview], Tutorial
 
-      can :index, Tutorial do |tutorial|
+      can [:index, :validate_certificate], Tutorial do |tutorial|
         user.tutor?
       end
 
@@ -140,15 +149,15 @@ class Ability
         tutorial.lecture.edited_by?(user)
       end
 
-      can [:bulk_download, :bulk_upload], Tutorial do |tutorial|
-        tutorial.tutor == user
+      can [:bulk_download, :bulk_upload, :export_teams], Tutorial do |tutorial|
+        user.in?(tutorial.tutors)
       end
 
       cannot :read, User
       can :update, User do |u|
         user == u
       end
-      can [:teacher, :fill_user_select, :list], User
+      can [:teacher, :fill_user_select, :list, :delete_account], User
       can :manage, [:event, :vertex]
       can [:take, :proceed, :preview], Quiz
       can [:new, :create, :edit, :open, :close, :set_alternatives,
@@ -159,6 +168,12 @@ class Ability
       can [:linearize, :set_root, :set_level,
            :update_default_target, :delete_edge], Quiz do |quiz|
         quiz.edited_with_inheritance_by?(user)
+      end
+
+      can :claim, QuizCertificate
+
+      can :validate, QuizCertificate do |quiz_certificate|
+        user.tutor?
       end
     else
       can :read, :all
@@ -238,23 +253,31 @@ class Ability
       end
 
       can [:show_correction, :show_manuscript], Submission do |submission|
-        user.in?(submission.users) || user == submission.tutorial.tutor
+        user.in?(submission.users) || user.in?(submission.tutorial.tutors)
       end
 
       can [:add_correction, :delete_correction, :select_tutorial, :move,
            :cancel_action, :accept, :reject, :edit_correction,
            :cancel_edit_correction],
           Submission do |submission|
-        user == submission.tutorial.tutor
+        user.in?(submission.tutorial.tutors)
       end
 
-      can :index, Tutorial do |tutorial|
+      can [:index, :validate_certificate], Tutorial do |tutorial|
         user.tutor?
       end
 
-      can [:bulk_download, :bulk_upload], Tutorial do |tutorial|
-        tutorial.tutor == user
+      can [:bulk_download, :bulk_upload, :export_teams], Tutorial do |tutorial|
+        user.in?(tutorial.tutors)
       end
+
+      can :claim, QuizCertificate
+
+      can :validate, QuizCertificate do |quiz_certificate|
+        user.tutor?
+      end
+
+      can :delete_account, User
     end
   end
 end

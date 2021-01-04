@@ -13,7 +13,7 @@ if Rails.env.development? || Rails.env == 'docker_development'
   }
 elsif Rails.env.production?
   Shrine.storages = {
-    cache: Shrine::Storage::FileSystem.new("/caches", prefix: "medien_uploads"),
+    cache: Shrine::Storage::FileSystem.new("/caches", prefix: "medien_uploads" ,clean:false),
     store: Shrine::Storage::FileSystem.new((ENV['MEDIA_PATH'] || '/private/media'),
                                            prefix: "/"),
     submission_cache: Shrine::Storage::FileSystem.new((ENV['SUBMISSION_PATH'] || '/private/submissions'),
@@ -31,11 +31,11 @@ elsif Rails.env.test?
 end
 
 Shrine.plugin :activerecord
-Shrine.plugin :determine_mime_type
+# Shrine.plugin :determine_mime_type
 Shrine.plugin :cached_attachment_data # for forms
-Shrine.plugin :restore_cached_data
+# Shrine.plugin :restore_cached_data
 Shrine.plugin :instrumentation
 
 # use mv instead of cp when promoting files from cache to store
-Shrine.plugin :upload_options, cache: { move: !Rails.env.test? },
-                               store: { move: !Rails.env.test? }
+# Shrine.plugin :upload_options, cache: { move: !Rails.env.test? },
+#                                store: { move: !Rails.env.test? }

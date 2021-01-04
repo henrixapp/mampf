@@ -19,6 +19,10 @@ Rails.application.routes.draw do
   get '/administration/classification', to: 'administration#classification',
                                         as: 'classification'
 
+  post 'announcements/:id/propagate', to: 'announcements#propagate',
+                                      as: 'propagate_announcement'
+  post 'announcements/:id/expel', to: 'announcements#expel',
+                                  as: 'expel_announcement'
   resources :announcements, only: [ :index, :new, :create]
 
   resources :answers, except: [:index, :show, :edit]
@@ -227,6 +231,9 @@ Rails.application.routes.draw do
   patch 'profile/subscribe_lecture', as: 'subscribe_lecture'
   patch 'profile/unsubscribe_lecture', as: 'unsubscribe_lecture'
   get 'profile/show_accordion', as: 'show_accordion'
+  patch 'profile/star_lecture', as: 'star_lecture'
+  patch 'profile/unstar_lecture', as: 'unstar_lecture'
+
 
   resources :programs, except: [:show]
 
@@ -235,6 +242,12 @@ Rails.application.routes.draw do
   patch 'question/:id/set_solution_type', to: 'questions#set_solution_type',
                                           as: 'set_solution_type'
   resources :questions, only: [:edit, :update]
+
+  post 'quiz_certificates/:id/claim', to: 'quiz_certificates#claim',
+                                     as: 'claim_quiz_certificate'
+
+  post 'quiz_certificates/validate', to: 'quiz_certificates#validate',
+                                     as: 'validate_certificate'
 
   get 'quizzes/:id/take', to: 'quizzes#take',
                           as: 'take_quiz'
@@ -321,7 +334,7 @@ Rails.application.routes.draw do
       to: 'submissions#cancel_edit_correction',
       as: 'cancel_edit_correction'
 
-  resources :submissions, except: :index
+  resources :submissions, except: [:index, :show]
 
   get 'tags/modal', to: 'tags#modal',
                     as: 'tag_modal'
@@ -357,6 +370,14 @@ Rails.application.routes.draw do
         to: 'tutorials#bulk_upload',
         as: 'bulk_upload_corrections'
 
+  get 'tutorials/validate_certificate',
+      to: 'tutorials#validate_certificate',
+      as: 'validate_certificate_as_tutor'
+
+  get 'tutorials/:id/assignments/:ass_id/export_teams',
+      to: 'tutorials#export_teams',
+      as: 'export_teams_to_csv'
+
   resources :tutorials, only: [ :new, :edit, :create, :update, :destroy]
 
   get 'sections/list_tags', to: 'sections#list_tags',
@@ -385,6 +406,8 @@ Rails.application.routes.draw do
                               as: 'fill_user_select'
   get 'users/list', to: 'users#list',
                     as: 'list_users'
+  get 'users/delete_account', to: 'users#delete_account',
+                              as: 'delete_account'
   resources :users, only: [:index, :edit, :update, :destroy]
 
   get 'examples/:id', to: 'erdbeere#show_example',
@@ -427,7 +450,7 @@ Rails.application.routes.draw do
   mount CorrectionUploader.upload_endpoint(:submission_cache) => "/corrections/upload"
   mount ZipUploader.upload_endpoint(:submission_cache) => "/packages/upload"
   mount Thredded::Engine => '/forum'
-  get '*path', to: 'main#error'
+  match '*path', to: 'main#error', via: :all
 
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
 end

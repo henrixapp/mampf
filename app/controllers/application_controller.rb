@@ -22,7 +22,6 @@ class ApplicationController < ActionController::Base
                                                              edited_courses: [:editors, lectures: [:term, :teacher]],
                                                              edited_lectures: [:course, :term, :teacher],
                                                              given_lectures: [:course, :term, :teacher],
-                                                             course_user_joins: [:course],
                                                              notifications: [:notifiable]])
     end
   end
@@ -47,6 +46,12 @@ class ApplicationController < ActionController::Base
     else
       start_path
     end
+  end
+
+  def prevent_caching
+    response.headers["Cache-Control"] = "no-cache, no-store"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "Mon, 01 Jan 1990 00:00:00 GMT"
   end
 
   private

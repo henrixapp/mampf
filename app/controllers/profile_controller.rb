@@ -2,13 +2,10 @@
 class ProfileController < ApplicationController
   before_action :set_user
   before_action :set_basics, only: [:update]
-  before_action :set_lecture, only: [:subscribe_lecture,
-                                     :unsubscribe_lecture]
+  before_action :set_lecture, only: [:subscribe_lecture, :unsubscribe_lecture,
+                                     :star_lecture, :unstar_lecture]
 
   def edit
-    # ensure that users do not have a blank name and a locale
-    @user.update(name: @user.name || @user.email.split('@').first,
-                 locale: @user.locale || I18n.default_locale.to_s)
     unless @user.consents
       redirect_to consent_profile_path
       return
@@ -26,8 +23,7 @@ class ProfileController < ApplicationController
                     name: @name,
                     name_in_tutorials: @name_in_tutorials,
                     subscription_type: @subscription_type,
-                    locale: @locale,
-                    edited_profile: true)
+                    locale: @locale)
       @user.update(email_params)
       # remove notifications that have become obsolete
       clean_up_notifications
@@ -45,7 +41,7 @@ class ProfileController < ApplicationController
   # this is triggered after every sign in
   # if profile has never been edited user is redirected
   def check_for_consent
-    if @user.consents && @user.edited_profile
+    if @user.consents
       redirect_to :root
       return
     end
@@ -94,6 +90,24 @@ class ProfileController < ApplicationController
     end
   end
 
+  def star_lecture
+    return unless @lecture&.in?(current_user.lectures)
+    if !@lecture.in?(current_user.favorite_lectures)
+      current_user.favorite_lectures << @lecture
+    end
+    # as favorite lectures appear in the navbar which is cached e.g. in
+    # the lecture show action, make sure the cache is invalidated by
+    # touching the user
+    current_user.touch
+    @success = true
+  end
+
+  def unstar_lecture
+    return unless @lecture
+    current_user.favorite_lectures.delete(@lecture)
+    current_user.touch
+  end
+
   def show_accordion
     @collapse_id = params[:id]
     @lectures = case @collapse_id
@@ -136,7 +150,7 @@ class ProfileController < ApplicationController
     @lecture = Lecture.find_by_id(lecture_params[:id])
     @passphrase = lecture_params[:passphrase]
     @parent = lecture_params[:parent]
-    @current =  !@parent.in?(['lectureSearch', 'inactive'])
+    @current = !@parent.in?(['lectureSearch', 'inactive'])
     redirect_to start_path unless @lecture
   end
 

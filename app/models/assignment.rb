@@ -12,13 +12,12 @@ class Assignment < ApplicationRecord
 
   scope :expired, -> { where('deadline < ?', Time.now) }
 
-  def self.current_in_lecture(lecture)
-    Assignment.where(lecture: lecture).active.order(:deadline)&.first
+  def self.accepted_file_types
+    ['.pdf', '.tar.gz', '.cc', '.hh', '.m', '.mlx', '.zip']
   end
 
-  def self.previous_in_lecture(lecture)
-    Assignment.where(lecture: lecture).expired.order(:deadline)&.last
-  end
+  validates :accepted_file_type,
+            inclusion: { in: Assignment.accepted_file_types }
 
   def submission(user)
   	UserSubmissionJoin.where(submission: Submission.where(assignment: self),
@@ -52,18 +51,18 @@ class Assignment < ApplicationRecord
   end
 
   def current?
-  	self == Assignment.current_in_lecture(lecture)
+  	self.in?(lecture.current_assignments)
   end
 
   def previous?
-  	self == Assignment.previous_in_lecture(lecture)
+  	self.in?(lecture.previous_assignments)
   end
 
   def previous
-    siblings = lecture.assignments.order(:deadline)
-    position = siblings.find_index(self)
+    siblings = lecture.assignments_by_deadline
+    position = siblings.map(&:first).find_index(deadline)
     return unless position.positive?
-    siblings[position - 1]
+    siblings[position - 1].second
   end
 
   def submission_partners(user)
@@ -83,5 +82,48 @@ class Assignment < ApplicationRecord
   def check_destructibility
   	throw(:abort) unless destructible?
   	true
+  end
+
+  def has_documents?
+    return false unless medium
+    medium.video || medium.manuscript || medium.geogebra ||
+      medium.external_reference_link.present? ||
+      (medium.sort == 'Quiz' && medium.quiz_graph)
+  end
+
+  def self.accepted_mime_types
+    { '.pdf' => ['application/pdf'],
+      '.tar.gz' => ['application/gzip', 'application/x-gzip',
+                    'application/x-gunzip', 'application/gzipped',
+                    'application/gzip-compressed', 'application/x-compressed',
+                    'application/x-compress', 'gzip/document',
+                    'application/octet-stream'],
+      '.cc' => ['text/*'],
+      '.hh' => ['text/*'],
+      '.m' => ['text/*'],
+      '.mlx' => ['application/zip', 'application/x-zip',
+                 'application/x-zip-compressed', 'application/octet-stream',
+                 'application/x-compress', 'application/x-compressed',
+                 'multipart/x-zip'],
+      '.zip' => ['application/zip', 'application/x-zip',
+                 'application/x-zip-compressed', 'application/octet-stream',
+                 'application/x-compress', 'application/x-compressed',
+                 'multipart/x-zip'] }
+  end
+
+  def self.non_inline_file_types
+    ['.tar.gz', '.zip', '.mlx']
+  end
+
+  def accepted_mime_types
+    Assignment.accepted_mime_types[accepted_file_type]
+  end
+
+  # some browsers have issues when the accept attribute of a file input
+  # is set to .tar.gz
+  # see e.g. https://bugs.chromium.org/p/chromium/issues/detail?id=521781
+  def accepted_for_file_input
+  	return accepted_file_type unless accepted_file_type == '.tar.gz'
+  	'.gz'
   end
 end

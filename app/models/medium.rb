@@ -47,6 +47,8 @@ class Medium < ApplicationRecord
   has_many :importing_courses, through: :imports,
            source: :teachable, source_type: 'Course'
 
+  has_many :quiz_certificates, foreign_key: 'quiz_id', dependent: :destroy
+
   has_one :assignment
 
   serialize :quiz_graph, QuizGraph
@@ -202,7 +204,8 @@ class Medium < ApplicationRecord
     # media sitting at course level
     course_media_in_project = media_in_project.includes(:tags)
                                               .where(teachable: lecture.course)
-                                              .natural_sort_by(&:caption)
+                                              .order(boost: :desc,
+                                                     description: :asc)
     # media sitting at lecture level
     # append results at course level to lecture/lesson level results
     lecture.lecture_lesson_results(media_in_project) + course_media_in_project
@@ -212,7 +215,7 @@ class Medium < ApplicationRecord
   def self.media_in_project(project)
     return Medium.none unless project.present?
     sort = project == 'keks' ? 'Quiz' : project.capitalize
-    Medium.where(sort: sort).order(:id)
+    Medium.where(sort: sort)
   end
 
   # returns the array of all media (by title), together with their ids
@@ -237,10 +240,8 @@ class Medium < ApplicationRecord
   # by the controller
   def self.search_by(search_params, page)
     search_params[:types] = [] if search_params[:all_types] == '1'
-    if search_params[:teachable_inheritance] == '1'
-      search_params[:teachable_ids] = Course.search_inherited_teachables(search_params)
-    end
-    search_params[:teachable_ids] = [] if search_params[:all_teachables] == '1'
+    search_params[:teachable_ids] = TeachableParser.new(search_params)
+                                                   .teachables_as_strings
     search_params[:editor_ids] = [] if search_params[:all_editors] == '1'
     if search_params[:all_tags] == '1' && search_params[:tag_operator] == 'and'
       search_params[:tag_ids] = Tag.pluck(:id)

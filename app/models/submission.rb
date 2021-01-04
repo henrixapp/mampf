@@ -22,7 +22,7 @@ class Submission < ApplicationRecord
   end
 
   def team
-  	users.map(&:tutorial_name).join(', ')
+  	users.map(&:tutorial_name).natural_sort.join(', ')
   end
 
   def manuscript_filename
@@ -35,9 +35,19 @@ class Submission < ApplicationRecord
     manuscript.metadata['size']
   end
 
+  def manuscript_mime_type
+		return unless manuscript.present?
+    manuscript.metadata['mime_type']
+  end
+
   def correction_filename
     return unless correction.present?
     correction.metadata['filename']
+  end
+
+  def correction_mime_type
+		return unless correction.present?
+    correction.metadata['mime_type']
   end
 
   def correction_size
@@ -46,8 +56,8 @@ class Submission < ApplicationRecord
   end
 
 
-  def preceding_tutorial(user)subm
-    assignment.previous.submission(user)
+  def preceding_tutorial(user)
+    assignment.previous&.map { |a| a.tutorial(user) }&.compact&.first
   end
 
   def invited_users
@@ -83,12 +93,12 @@ class Submission < ApplicationRecord
   	manuscript.to_io.path
   end
 
-  def filename_in_zip
-		(users.map(&:tutorial_name).join('-') +
-			I18n.l(last_modification_by_users_at, format: :short) +
-			(too_late? ? '-LATE-' : '') +
+  def filename_for_bulk_download
+		(team.first(180) + '-' +
+			last_modification_by_users_at.strftime("%F-%H%M") +
+			(too_late? ? '-LATE' : '') +
 			+ '-ID-' + id +
-			'.pdf')
+			assignment.accepted_file_type)
 			.gsub(/[\x00\/\\:\*\?\"<>\|]/, '_')
 	   	.gsub(/^.*(\\|\/)/, '')
    		# Strip out the non-ascii characters
@@ -101,7 +111,7 @@ class Submission < ApplicationRecord
     begin
       archived_filestream = Zip::OutputStream.write_buffer do |stream|
         submissions.each do |s|
-          stream.put_next_entry(s.filename_in_zip)
+          stream.put_next_entry(s.filename_for_bulk_download)
           stream.write IO.read(s.file_path)
         end
       end
@@ -112,53 +122,50 @@ class Submission < ApplicationRecord
     archived_filestream
   end
 
-  def self.unzip_corrections!(tutorial, assignment, zipfile)
-    submissions = Submission.where(tutorial: tutorial,
-                                   assignment: assignment).proper
-    report = { successful_extractions: 0, submissions: submissions.size,
-    					 invalid_filenames: [], invalid_id: [], in_subfolder: [],
-               no_decision: [], rejected: [], invalid_file: [] }
-    tmp_folder = Dir.mktmpdir
-    begin
-      Zip::File.open(zipfile) do |zip_file|
-        zip_file.each do |entry|
-          if File.basename(entry.name) != entry.name
-            report[:in_subfolder].push(entry.name)
-            next
-          end
-      	  if !'-ID-'.in?(entry.name)
-      	 	  report[:invalid_filenames].push(entry.name)
-        	  next
-      	  end
-          submission = Submission.find_by_id(entry.name.split('-ID-').last
-                                                  .remove('.pdf'))
-          if !submission
-        	  report[:invalid_id].push(entry.name)
-        	  next
-          end
-          if submission.too_late? && submission.accepted.nil?
-        	  report[:no_decision].push(submission.team)
-        	  next
-          end
-          if submission.too_late? && submission.accepted == false
-					  report[:rejected].push(submission.team)
-        	  next
-          end
-          puts "Extracting #{entry.name}"
-          extracted_file = File.join(tmp_folder, entry.name)
-          entry.extract(extracted_file)
-          submission.update(correction: File.open(extracted_file))
-          if !submission.valid?
-        	  report[:invalid_file].push(entry.name)
-        	  next
-          end
-          report[:successful_extractions] += 1
-        end
-      end
-    rescue => e
-      report[:errors] = "#{e.message}"
+  def check_file_properties(metadata, sort)
+    errors = []
+    if sort == :submission && metadata['size'] > 10*1024*1024
+      errors.push I18n.t('submission.manuscript_size_too_big',
+                         max_size: '10 MB')
     end
-    report
+    if sort == :correction && metadata['size'] > 15*1024*1024
+      errors.push I18n.t('submission.manuscript_size_too_big',
+                         max_size: '15 MB')
+    end
+    file_name = metadata['filename']
+    file_type = File.extname(file_name)
+    if file_type != assignment.accepted_file_type &&
+      assignment.accepted_file_type != '.tar.gz'
+      errors.push I18n.t('submission.wrong_file_type',
+                         file_type: file_type,
+                         accepted_file_type: assignment.accepted_file_type)
+    end
+    if assignment.accepted_file_type == '.tar.gz'
+    	if file_type == '.gz'
+    		reduced_type = File.extname(File.basename(file_name, '.gz'))
+    		if reduced_type != '.tar'
+					errors.push I18n.t('submission.wrong_file_type',
+                      			 file_type: '.gz',
+                      			 accepted_file_type: '.tar.gz')
+        end
+      else
+				errors.push I18n.t('submission.wrong_file_type',
+                      		 file_type: file_type,
+                     	 		 accepted_file_type: '.tar.gz')
+			end
+    end
+    if (!assignment.accepted_file_type.in?(['.cc', '.hh', '.m']) &&
+      !metadata['mime_type'].in?(assignment.accepted_mime_types)) ||
+      (assignment.accepted_file_type.in?(['.cc', '.hh', '.m']) &&
+        (!metadata['mime_type'].starts_with?('text/') &&
+         metadata['mime_type'] != 'application/octet-stream'))
+      errors.push I18n.t('submission.wrong_mime_type',
+                          mime_type: metadata['mime_type'],
+                          accepted_mime_types: assignment.accepted_mime_types
+                                                         .join(', '))
+    end
+    return {} unless errors.present?
+    { sort => errors }
   end
 
   def self.bulk_corrections!(tutorial, assignment, files)
@@ -209,7 +216,7 @@ class Submission < ApplicationRecord
   private
 
 	def matching_lecture
-		return true if tutorial&.lecture == assignment.lecture
+		return true if tutorial&.lecture == assignment&.lecture
 		errors.add(:tutorial, :lecture_not_matching)
 	end
 

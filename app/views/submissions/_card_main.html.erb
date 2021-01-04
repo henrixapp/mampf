@@ -8,13 +8,14 @@
             <%= t('basics.tutorial') %>
           </th>
           <td>
-            <%= submission.tutorial.title_with_tutor %>
+            <%= submission.tutorial.title_with_tutors %>
           </td>
         </tr>
         <% if assignment.semiactive? %>
           <tr>
             <th scope="row">
               <%= t('basics.code') %>
+              <%= helpdesk(t('submission.code_explanation'), false) %>
             </th>
             <td>
               <span class="submissionToken" data-id="<%= submission.id %>">
@@ -29,7 +30,7 @@
                 title="<%= t('buttons.copy_to_clipboard') %>">
                 <span class="clipboardpopuptext token-clipboard-popup"
                       data-id="<%= assignment.id %>">
-                  <%= t('submission.code_copied_to_clipboard') %>
+                  <%= t('basics.code_copied_to_clipboard') %>
                 </span>
               </i>
               <%= link_to '',
@@ -51,12 +52,12 @@
           </th>
           <td>
             <% if submission.manuscript %>
-              <%= link_to t('basics.submission'),
+              <%= link_to raw(t('basics.submission') + ' &darr;'),
                           show_submission_manuscript_path(submission),
                           target: :_blank,
                           class: 'badge badge-secondary' %>
               <% if submission.correction %>
-                <%= link_to t('basics.correction'),
+                <%= link_to raw(t('basics.correction') + ' &darr;') ,
                           show_correction_path(submission),
                           target: :_blank,
                           class: 'badge badge-secondary' %>
@@ -80,6 +81,7 @@
         <tr>
           <th scope="row">
             <%= t('submission.deletion_date') %>
+            <%= helpdesk(t('submission.deletion_date_info'), false) %>
           </th>
           <td>
             <%= I18n.l(assignment.lecture.submission_deletion_date,
@@ -89,6 +91,7 @@
         <tr>
           <th scope="row">
             <%= t('basics.team') %>
+            <%= helpdesk(t('submission.team_info'), false) %>
           </th>
           <td>
             <% if submission.users.count == 1 %>

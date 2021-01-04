@@ -222,7 +222,7 @@ class LecturesController < ApplicationController
     @lectures = Kaminari.paginate_array(results, total_count: @total)
                         .page(params[:page]).per(search_params[:per])
     return unless @total.zero?
-    return unless search_params[:fulltext]&.length > 1
+    return unless search_params[:fulltext]&.length.to_i > 1
     @similar_titles = Course.similar_courses(search_params[:fulltext])
   end
 
@@ -297,10 +297,10 @@ class LecturesController < ApplicationController
     I18n.available_locales.each do |l|
       local_recipients = recipients.where(locale: l)
       if local_recipients.any?
-        NotificationMailer.with(recipients: local_recipients,
+        NotificationMailer.with(recipients: local_recipients.pluck(:id),
                                 locale: l,
                                 lecture: @lecture)
-                          .new_lecture_email.deliver_now
+                          .new_lecture_email.deliver_later
       end
     end
   end

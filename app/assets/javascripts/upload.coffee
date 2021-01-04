@@ -66,7 +66,7 @@ videoUpload = (fileInput) ->
   uppy.use Uppy.XHRUpload,
     endpoint: '/videos/upload'
     fieldName: 'file'
-    timeout: 120 * 1000
+    timeout: 240 * 1000
 
   # give the user feedback after upload has started
   uppy.on 'upload', (data) ->
@@ -88,14 +88,10 @@ videoUpload = (fileInput) ->
 
       videoFile = document.getElementById('video-file')
       videoSize = document.getElementById('video-size')
-      videoResolution = document.getElementById('video-resolution')
-      videoDuration = document.getElementById('video-duration')
 
       # put metadata into place
       videoFile.innerHTML = data.metadata.filename
       videoSize.innerHTML = formatBytes(data.metadata.size)
-      videoResolution.innerHTML = data.metadata.resolution
-      videoDuration.innerHTML = fancyTimeFormat(Math.round(data.metadata.duration))
       $(metaData).show()
       $(videoPreviewArea).show()
       $('#medium_detach_video').val('false')
@@ -327,13 +323,13 @@ imageUpload = (fileInput) ->
 @correctionUpload = (fileInput, uploadButton, informer, statusBar, hiddenInput, metaData) ->
   # uppy will add its own file input
   fileInput.style.display = 'none'
+  allowedInput = fileInput.dataset.accept
 
   # create uppy instance
   uppy = Uppy.Core(
     id: fileInput.id
     autoProceed: true
     restrictions:
-      allowedFileTypes: ['.pdf']
       maxFileSize: 15728640)
     .use(Uppy.FileInput,
       target: uploadButton
@@ -349,20 +345,15 @@ imageUpload = (fileInput) ->
   # add metadata to manuscript card if upload was successful
   uppy.on 'upload-success', (file, response) ->
     data = response.body
-    if data.metadata.mime_type in ['application/pdf']
-      # read uploaded file data from the upload endpoint response
-      uploadedFileData = JSON.stringify(data)
+    # read uploaded file data from the upload endpoint response
+    uploadedFileData = JSON.stringify(data)
 
-      # set hidden field value to the uploaded file data so that it is
-      # submitted with the form as the attachment
-      hiddenInput.value = uploadedFileData
+    # set hidden field value to the uploaded file data so that it is
+    # submitted with the form as the attachment
+    hiddenInput.value = uploadedFileData
 
-      metaData.innerHTML = data.metadata.filename + ' (' + formatBytes(data.metadata.size) + ')'
-      metaData.style.display = 'inline'
-    else
-      # display error message if uppy detects wrong mime type
-      uppy.info('Falscher MIME-Typ:' + data.metadata.mime_type, 'error', 5000)
-      uppy.reset()
+    metaData.innerHTML = data.metadata.filename + ' (' + formatBytes(data.metadata.size) + ')'
+    metaData.style.display = 'inline'
     return
 
   # display error message on console if an upload error has ocurred
@@ -380,6 +371,7 @@ bulkCorrectionUpload = (fileInput) ->
   statusBar = document.getElementById('upload-bulk-correction-statusBar')
   hiddenInput = document.getElementById('upload-bulk-correction-hidden')
   metaData = document.getElementById('upload-bulk-correction-metadata')
+  fileCount = 0
 
   # uppy will add its own file input
   fileInput.style.display = 'none'
@@ -388,9 +380,9 @@ bulkCorrectionUpload = (fileInput) ->
   uppy = Uppy.Core(
     id: fileInput.id
     autoProceed: true
+    allowMultipleUploads: false
     restrictions:
-      allowedFileTypes: ['.zip']
-      maxFileSize: 1073741824)
+      maxFileSize: 15*1024*1024)
     .use(Uppy.FileInput,
       target: uploadButton
       locale: strings: chooseFiles: uploadButton.dataset.choosefiles)
@@ -402,30 +394,35 @@ bulkCorrectionUpload = (fileInput) ->
     endpoint: '/packages/upload'
     fieldName: 'file'
 
-  # add metadata to manuscript card if upload was successful
-  uppy.on 'upload-success', (file, response) ->
-    data = response.body
-    if data.metadata.mime_type in ['application/zip']
-      # read uploaded file data from the upload endpoint response
-      uploadedFileData = JSON.stringify(data)
-
-      # set hidden field value to the uploaded file data so that it is
-      # submitted with the form as the attachment
-      hiddenInput.value = uploadedFileData
-
-      metaData.innerHTML = data.metadata.filename + ' (' + formatBytes(data.metadata.size) + ')'
-      metaData.style.display = 'inline'
-      $('#upload-bulk-correction-save').prop('disabled', false)
-    else
-      # display error message if uppy detects wrong mime type
-      uppy.info('Falscher MIME-Typ:' + data.metadata.mime_type, 'error', 5000)
-      uppy.reset()
-    return
-
   # display error message on console if an upload error has ocurred
   uppy.on 'upload-error', (file, error) ->
     console.log('error with file:', file.id)
     console.log('error message:', error)
+    return
+
+  uppy.on 'complete', (result) ->
+    console.log('successful files:', result.successful)
+    console.log('failed files:', result.failed)
+    if result.successful.length > 0
+      uploaded_files = result.successful.map (file) -> file.response.body
+      console.log uploaded_files
+      hiddenInput.value = JSON.stringify(uploaded_files)
+      $('#upload-bulk-correction-save').prop('disabled', false)
+      $(metaData).empty()
+        .append(result.successful.length + ' ' +$(metaData).data('tr-uploads'))
+      $(uploadButton).hide()
+    return
+
+  $('#cancel-bulk-upload').on 'click', ->
+    clearBulkUploadArea()
+    uppy.reset()
+    return
+
+  $('#show-bulk-upload-area').on 'click', ->
+    $(this).hide()
+    uppy.reset()
+    $('#upload-bulk-correction-button').show()
+    $('#bulk-upload-area').show()
     return
 
   uppy
@@ -599,6 +596,8 @@ directUpload provides an interface to upload (multiple) files to an endpoint
     # rerender all
     $("#removeUserManuscript").hide()
     $('#userManuscript-status').show(400)
+    $('#file-permission-field').show()
+    $('#submission-final-upload-dialogue').show()
     $('#file-size-correct').hide()
     $('#file-size-way-too-big').hide()
     $('#file-size-too-big').hide()
@@ -612,13 +611,17 @@ directUpload provides an interface to upload (multiple) files to an endpoint
       $('#userManuscript-uploadButton-call')
         .removeClass('btn-outline-secondary')
         .addClass 'btn-primary'
-    else
+    else if file.type == 'application/pdf'
       if file.size > 10000000
         $('#file-size-way-too-big').show()
       else
         $('#file-size-too-big').show()
         $('#userManuscript-uploadButton-call').prop('disabled',false)
       $('#file-optimize').show()
+    else
+      $('#file-size-way-too-big').show()
+      $('#file-permission-field').hide()
+      $('#submission-final-upload-dialogue').hide()
 
   $('#userManuscript-uploadButton-call').on 'click', (e) ->
     e.preventDefault()
@@ -639,6 +642,7 @@ directUpload provides an interface to upload (multiple) files to an endpoint
           $('#upload-userManuscript').val("")
           $('input[type="submit"]').prop('disabled',false)
           $('#userManuscript-upload-notice').show()
+          $('#userManuscript-not-upload-notice').hide()
           $('#submission_detach_user_manuscript').val('false')
           $('#userManuscript-uploadButton-call').text(
             $('#userManuscript-uploadButton-call').data 'tr-success'
@@ -773,6 +777,7 @@ directUpload provides an interface to upload (multiple) files to an endpoint
       reader.readAsArrayBuffer(file)
 
   $('#upload-userManuscript').change () ->
+    $('#userManuscript-not-upload-notice').show()
     $('input[type="submit"]').prop('disabled',true)
     filez = Array.prototype.slice.call(
         document.getElementById('upload-userManuscript').files
