@@ -2,10 +2,12 @@
 class LecturesController < ApplicationController
   include ActionController::RequestForgeryProtection
   before_action :set_lecture, except: [:new, :create, :search]
+  authorize_resource except: [:show, :organizational, :show_announcements]
+  before_action :check_if_subscribed, only: [:show, :organizational,
+                                             :show_announcements]
   before_action :set_lecture_cookie, only: [:show, :organizational,
                                             :show_announcements]
   before_action :set_erdbeere_data, only: [:show_structures, :edit_structures]
-  authorize_resource
   before_action :check_for_consent
   before_action :set_view_locale, only: [:edit, :show, :inspect,
                                          :show_random_quizzes]
@@ -42,7 +44,6 @@ class LecturesController < ApplicationController
   end
 
   def show
-    # deactivate http caching for the moment
     if stale?(etag: @lecture,
               last_modified: [current_user.updated_at,
                               @lecture.updated_at,
@@ -379,5 +380,10 @@ class LecturesController < ApplicationController
   def check_if_enough_questions
     return if @lecture.course.enough_questions?
     redirect_to :root, alert: I18n.t('controllers.no_test')
+  end
+
+  def check_if_subscribed
+    return if @lecture.in?(current_user.lectures)
+    redirect_to :root, alert: 'Hier kommt der Link zum Abonnieren hin.'
   end
 end
